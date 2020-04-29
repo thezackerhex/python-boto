@@ -53,8 +53,6 @@ def get_aws_accounts_in_scope():
     return accounts_local
 
 def validate_credentials(accounts_dictionary, accounts_credentials, *profile):
-    # validate that the local credentials file has an entry for each account in scope and use only
-    # the credentials for the accounts in scope.
     in_scope_acct_alias_list = []
     for acct in accounts_credentials:
         if (acct in accounts_dictionary.values()):
@@ -68,7 +66,6 @@ def validate_credentials(accounts_dictionary, accounts_credentials, *profile):
     return in_scope_acct_alias_list
 
 def get_client(account, local_region):
-    # Sets up a boto3 session
     local_profile = account
     try:
         current_session = boto3.Session(profile_name = local_profile, region_name=local_region)
@@ -80,7 +77,6 @@ def get_client(account, local_region):
         exit()
 
 def get_client_rds(account, local_region):
-    # Sets up a boto3 session
     local_profile = account
     try:
         current_session = boto3.Session(profile_name = local_profile, region_name=local_region)
@@ -91,13 +87,24 @@ def get_client_rds(account, local_region):
         print('\'{}\' is not a configured account.'.format(account))
         exit()
 
+def get_client_docdb(account, local_region):
+    local_profile = account
+    try:
+        current_session = boto3.Session(profile_name = local_profile, region_name=local_region)
+        local_client = current_session.client("docdb")
+        return local_client
+    except:
+        print(local_region)
+        print('\'{}\' is not a configured account.'.format(account))
+        exit()
+
+
 def date_on_filename(filename, file_extension):
     from datetime import datetime
     date = str(datetime.now().date())
     return filename + "-" + date + "." + file_extension
 
 def get_regions(lcl_account):
-    #get the current list of regions to iterate through
     lcl_region = "us-east-1"
     client = get_client(lcl_account, lcl_region)
     aws_region_data = client.describe_regions()
@@ -130,8 +137,10 @@ def main():
         for region in regions:
             client = get_client(account, region)
             rds_client = get_client_rds(account, region)
+            docdb_client = get_client_docdb(account, region)
             response = client.describe_instances()
 	    rds_response = rds_client.describe_db_instances()
+	    docdb_response = docdb_client.describe_db_instances()
 	    itype = get_instance_type('ec2',region)
             owner_id = reservation_id = instance_id = state = image_id = instance_type = network_interfaces = ""
             vpc_id = launch_time = private_ip = private_dns_name = platform = public_dns_name = subnet_id = ""
@@ -204,6 +213,7 @@ def main():
                             age + "," + network_interfaces + "," + subnet_id + "," + private_ip + "," + private_dns_name + "," + \
                             public_dns_name + "," + keep_until + "," + managed_by + "," + tag_qty
                         file.write(print_string + "\n" + "\n" + "\n" + "\n" )
+
 			print_string_rds_hdr = "account,Database,DbVersion,InstanceType,Retention_Period\n"
     			file.write(print_string_rds_hdr)
                         Engine = EngineVersion = status = Instance_type = Arn = Retention_Period = ""
@@ -226,7 +236,31 @@ def main():
                         print_string_rds = account + "," + Engine + "," + EngineVersion + "," + Instance_type + "," + Retention_Period
                         file.write(print_string_rds + "\n")
                         file.write("\n" + "\n" + "\n" + "\n")
+
+			print_string_docdb_hdr = "account,Database,DbVersion,InstanceType,Retention_Period\n"
+    			file.write(print_string_docdb_hdr)
+                        Engine = EngineVersion = status = Instance_type = Arn = Retention_Period = ""
+          	        for key1, value1 in docdb_response.items():
+               		   if key1 == "DBInstances":
+                   		 for object_a in value1:
+                       			 for key2, value2 in object_a.items():
+                     			       if key2 == "BackupRetentionPeriod":
+                     			           Retention_Period = str(value2)
+                  			       if key2 == "DBInstanceArn":
+                         		           Arn = value2
+                       			       if key2 == "DBInstanceClass":
+                         		           Instance_type = value2
+                       			       if key2 == "DBInstanceStatus":
+                          		           status = value2
+                  		               if key2 == "Engine":
+                       			           Engine = value2
+                  		               if key2 == "EngineVersion":
+                         		           EngineVersion = value2
+                        print_string_docdb = account + "," + Engine + "," + EngineVersion + "," + Instance_type + "," + Retention_Period
+                        file.write(print_string_docdb + "\n")
+
                         print_type_hdr = "instance_type,count\n"
+                        file.write("\n" + "\n" + "\n" + "\n")
                         file.write(print_type_hdr)
                         i = dict((x,itype.count(x)) for x in set(itype))
         		print(i)
