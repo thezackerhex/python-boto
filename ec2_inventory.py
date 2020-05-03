@@ -227,8 +227,9 @@ def main():
                         	file.write(print_string_rds + "\n")
             file.write("\n" + "\n" + "\n")
             docdb_client = get_client_docdb(account, region)
-	    print_string_docdb_hdr = "account,Database,DbVersion,InstanceType,Retention_Period\n"
+	    print_string_docdb_hdr = "account,Database,DbVersion,InstanceType,Retention_Period,InstanceIdentifier\n"
     	    file.write(print_string_docdb_hdr)
+
             Engine = EngineVersion = status = Instance_type = Arn = Retention_Period = ""
 	    docdb_response = docdb_client.describe_db_instances()
             for key1, value1 in docdb_response.items():
@@ -247,7 +248,9 @@ def main():
                        			           Engine = value2
                   		               if key2 == "EngineVersion":
                          		           EngineVersion = value2
-                        	print_string_docdb = account + "," + Engine + "," + EngineVersion + "," + Instance_type + "," + Retention_Period
+                  		               if key2 == "InstanceIdentifier":
+                         		           InstanceIdentifier = value2
+                        	print_string_docdb = account + "," + Engine + "," + EngineVersion + "," + Instance_type + "," + Retention_Period + "," + InstanceIdentifier
                        		file.write(print_string_docdb + "\n")
             file.write("\n" + "\n" + "\n")
 	    itype = get_instance_type('ec2',region)
