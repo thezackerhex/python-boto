@@ -124,8 +124,8 @@ def main():
     account_list = get_account_list()
     validated_accounts = validate_credentials(accounts, account_list)
     file = open(report_filename, 'w+')
-    print_string_hdr = "account,name,owner_id,region,reservation_id,instance_id,state,image_id,platform,instance_type,vpc_id," \
-    + "launch_time,age,network_interfaces,subnet_id,private_ip,private_dns_name,public_dns_name,keep_until,managed_by,tag_qty\n"
+    print_string_hdr = "account,name,owner_id,region,reservation_id,instance_id,state,image_id,instance_type,vpc_id," \
+    + "launch_time,age,network_interfaces,subnet_id,private_ip,private_dns_name,tag_qty\n"
     file.write(print_string_hdr)
     regions = ['us-east-1']
     for account in validated_accounts:
@@ -134,8 +134,8 @@ def main():
             client = get_client(account, region)
             response = client.describe_instances()
             owner_id = reservation_id = instance_id = state = image_id = instance_type = network_interfaces = ""
-            vpc_id = launch_time = private_ip = private_dns_name = platform = public_dns_name = subnet_id = ""
-            name = keep_until = managed_by = tag_qty = age = ""
+            vpc_id = launch_time = private_ip = private_dns_name = public_dns_name = subnet_id = ""
+            name = tag_qty = age = ""
             for key1, value1 in response.items():
                 if key1 == "Reservations":
                     for object_a in value1:
@@ -179,10 +179,10 @@ def main():
                                             private_ip = value3
                                         if key3 == "PrivateDnsName":
                                             private_dns_name = value3
-                                        if key3 == "PublicDnsName":
-                                            public_dns_name = value3
-                                        if key3 == "Platform":
-                                            platform = value3
+                                     #   if key3 == "PublicDnsName":
+                                      #      public_dns_name = value3
+                                        #if key3 == "Platform":
+                                        #    platform = value3
                                         if key3 == "Tags":
                                             name = keep_until = managed_by = tag_qty = ""
                                             for dictionary in value3:
@@ -190,15 +190,15 @@ def main():
                                                 value4 = dictionary['Value']
                                                 if key4 == 'Name':
                                                     name = '"' + value4 + '"'
-                                                if key4 == 'KeepUntil':
-                                                    keep_until = '"' + value4 + '"'
-                                                if key4 == 'ManagedBy':
-                                                    managed_by = '"' + value4 + '"'
+                                          #      if key4 == 'KeepUntil':
+                                         #           keep_until = '"' + value4 + '"'
+                                           #     if key4 == 'ManagedBy':
+                                            #        managed_by = '"' + value4 + '"'
                                             tag_qty = str(len(value3))
                         print_string = account + "," + name + ",'" + owner_id + "'," + region + "'," + reservation_id + "," + instance_id + "," + \
-                        state + "," + image_id + "," + platform + "," + instance_type + "," + vpc_id + "," + launch_time + "," + \
+                        state + "," + image_id +  "," + instance_type + "," + vpc_id + "," + launch_time + "," + \
                         age + "," + network_interfaces + "," + subnet_id + "," + private_ip + "," + private_dns_name + "," + \
-                        public_dns_name + "," + keep_until + "," + managed_by + "," + tag_qty
+                        tag_qty
                         file.write(print_string + "\n")
             file.write("\n" + "\n" + "\n")
             rds_client = get_client_rds(account, region)
@@ -230,27 +230,27 @@ def main():
 	    print_string_docdb_hdr = "account,Database,DbVersion,InstanceType,Retention_Period,InstanceIdentifier\n"
     	    file.write(print_string_docdb_hdr)
 
-            Engine = EngineVersion = status = Instance_type = Arn = Retention_Period = ""
+            DocEngine = DocEngineVersion = Docstatus = DocInstance_type = DocArn = DocRetention_Period = ""
 	    docdb_response = docdb_client.describe_db_instances()
             for key1, value1 in docdb_response.items():
        		     if key1 == "DBInstances":
                      	for object_a in value1:
                        		for key2, value2 in object_a.items():
                      			       if key2 == "BackupRetentionPeriod":
-                     			           Retention_Period = str(value2)
+                     			           DocRetention_Period = str(value2)
                   			       if key2 == "DBInstanceArn":
-                         		           Arn = value2
+                         		           DocArn = value2
                        			       if key2 == "DBInstanceClass":
-                         		           Instance_type = value2
+                         		           DocInstance_type = value2
                        			       if key2 == "DBInstanceStatus":
-                          		           status = value2
+                          		           Docstatus = value2
                   		               if key2 == "Engine":
-                       			           Engine = value2
+                       			           DocEngine = value2
                   		               if key2 == "EngineVersion":
-                         		           EngineVersion = value2
+                         		           DocEngineVersion = value2
                   		               if key2 == "InstanceIdentifier":
-                         		           InstanceIdentifier = value2
-                        	print_string_docdb = account + "," + Engine + "," + EngineVersion + "," + Instance_type + "," + Retention_Period + "," + InstanceIdentifier
+                         		           DocInstanceIdentifier = value2
+                        	print_string_docdb = account + "," + DocEngine + "," + DocEngineVersion + "," + DocInstance_type + "," + DocRetention_Period + "," + DocInstanceIdentifier
                        		file.write(print_string_docdb + "\n")
             file.write("\n" + "\n" + "\n")
 	    itype = get_instance_type('ec2',region)
